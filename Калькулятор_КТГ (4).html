@@ -1,0 +1,69 @@
+
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Калькулятор КТГ</title>
+<style>
+:root{--a:#234a73;--l:#d9dfe7;--bg:#f5f6f8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font:14px Arial,sans-serif}
+.wrap{max-width:920px;margin:20px auto;padding:12px}
+.card{background:#fff;border:1px solid var(--l);border-radius:12px;padding:20px}
+h1{margin:0 0 16px;font-size:28px;color:var(--a)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+label{display:block;margin:8px 0 4px;color:#555;font-size:12px}
+input{width:100%;height:38px;padding:0 10px;border:1px solid #cfd5dd;border-radius:8px;font-size:14px}
+.section{font-weight:700;color:var(--a);margin-bottom:8px}
+.result{display:grid;grid-template-columns:1fr 150px;align-items:center;height:40px;padding:0 12px;border:1px solid var(--l);border-radius:8px;margin-bottom:8px}
+.result b{text-align:right;color:var(--a)}
+#msg{display:none;margin-bottom:8px;padding:8px;border:1px solid var(--l);border-radius:8px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+</style></head><body><div class="wrap"><div class="card"><h1>Калькулятор экономии на КТГ</h1><div class="grid"><div>
+<label>Стоимость нового автобуса (руб)</label><input id="c1" type="number" value="15000000" min="1000000" max="100000000" step="100000" min="1000000" max="100000000" step="100000"/>
+<label>Срок эксплуатации (мес)</label><input id="c3" type="number" value="60" min="1" max="180" step="1" min="1" max="180" step="1"/>
+<label>Начальный КТГ</label><input id="c6" type="number" value="89" min="1" max="99" step="0.1" min="1" max="99" step="0.1"/>
+<label>КТГ после внедрения ТурбоСервис</label><input id="c7" type="number" value="94" min="1" max="99.9" step="0.1" min="1" max="99.9" step="0.1"/>
+<label>КТГ -&gt; КПИ</label><input id="c9" type="number" value="80" min="1" max="100" step="1" min="1" max="100" step="1"/>
+<label>Количество автобусов в парке</label><input id="c12" type="number" value="132" min="1" max="10000" step="1" min="1" max="10000" step="1"/>
+
+<label>Стоимость ТурбоСервиса на один автобус в месяц, ₽</label><input id="service" type="number" value="400" min="1" max="100000" step="10"/></div><div><div class="section">Результаты</div><div id="msg"></div><div id="out"></div></div></div><p>Если добавить экономию на ФОТ, на запчастях, то показатели будут ещё в 2-3 раза лучше!</p></div></div>
+<script>
+const f=n=>Number(n).toLocaleString('ru-RU')+' ₽',r=(n,d)=>{let k=10**-d;return Math.round(n/k)*k},rd=(n,d)=>{let k=10**-d;return Math.floor(n/k)*k},rw=(a,b)=>`<div class=result><span>${a}</span><b>${b}</b></div>`;
+function c(){msg.style.display='none';out.innerHTML='';
+const inputs=document.querySelectorAll('input[type=number]');
+for(const i of inputs){
+ let v=Number(i.value);
+ if((i.min!==''&&v<Number(i.min))||(i.max!==''&&v>Number(i.max))||isNaN(v)){return;}
+}
+
+let bp=+c1.value,l=+c3.value,k0=+c6.value,k1=+c7.value,k=+c9.value,b=+c12.value,s=+service.value;
+if(k1<=k0){msg.style.display='block';msg.textContent='КТГ после внедрения должен быть больше начального';return;}
+let res=bp*.2,
+loss5=bp-res,
+m=r(loss5/l,-3),
+deltaKtg=(k1-k0),
+kpi=deltaKtg*k/100,
+sb=rd(m*(kpi/100),-3),
+sm=sb*b;if(sm<=0)return;
+let sy=sm*12,cy=s*12*b;
+let paybackMonths=cy/sm;
+let paybackDays=Math.round(paybackMonths*30);
+out.innerHTML=rw('Остаточная стоимость через 5 лет (руб)',f(res))
++rw('Потеря стоимости за 5 лет (руб)',f(loss5))
++rw('Потеря стоимости в месяц на 1 автобус (руб)',f(m))
++rw('Изменение КТГ',deltaKtg.toFixed(1))
++rw('Увеличение КПИ прогноз',kpi.toFixed(1)+' %')
++rw('Экономия на 1 автобус в мес (руб)',f(sb))
++rw('Экономия на весь парк в мес (руб)',f(sm))+rw('Экономия на весь парк в год (руб)',f(sy))+rw('Затраты на ТурбоСервис в год (руб)',f(cy))+rw('Срок окупаемости (мес)',paybackMonths.toFixed(1)+' мес')+rw('Срок окупаемости (дней)',paybackDays+' дней')+rw('Возврат инвестиций ROI за год (только КТГ), %',Math.round((sy-cy)/cy*100)+' %')+rw('Коэффициент возврата на 1 рубль затрат',(sy/cy).toFixed(1));
+}
+document.querySelectorAll('input[type=number]').forEach(i=>{
+  i.addEventListener('input', c);
+  i.addEventListener('change', ()=>{
+    let v=Number(i.value);
+    if(i.min!=='' && v<+i.min) v=+i.min;
+    if(i.max!=='' && v>+i.max) v=+i.max;
+    i.value=v;
+    c();
+  });
+});
+c();
+</script></body></html>
